@@ -4,7 +4,7 @@ import (
 	"os"
     "io"
 	"archive/zip"
-	"flag"
+	//"flag"
     //"io/ioutil"
     "fmt"
 )
@@ -48,7 +48,12 @@ func (this *ZipCompress)addToZip(file *os.File, prefix string, zw *zip.Writer) e
         return err
     }
     if info.IsDir() {
-        prefix = prefix + "/" + info.Name()
+        if prefix == "" {
+           prefix = info.Name() 
+        } else {
+            prefix = prefix + "/" + info.Name()
+        }
+        fmt.Println(prefix)
         fileInfos, err := file.Readdir(-1)
         if err != nil {
             return err
@@ -73,7 +78,6 @@ func (this *ZipCompress)addToZip(file *os.File, prefix string, zw *zip.Writer) e
         }
         _, err = io.Copy(writer, file)
         if err != nil {
-            fmt.Printf("error")
             return err
         }
         file.Close()
@@ -105,14 +109,14 @@ func (this *ZipDecompress) Decompress(zipfile string, dst string) error{
 }
 
 func main(){
-	files := flag.String("files",".","zip files")
-    zipfile := flag.String("zipfile",".","zip file name")
+	// files := flag.String("files",".","zip files")
+ //    zipfile := flag.String("zipfile",".","zip file name")
 
-    flag.Parse()
+ //    flag.Parse()
 
-    fmt.Printf(" cmd   : %s\n", flag.Arg(0))
-    fmt.Printf(" flies : %s\n", *files)
-    fmt.Printf(" zipfile : %s\n", *zipfile)
+    // fmt.Printf(" cmd   : %s\n", flag.Arg(0))
+    // fmt.Printf(" flies : %s\n", *files)
+    // fmt.Printf(" zipfile : %s\n", *zipfile)
 
     var folder string = "./test"
     var output string = "test.zip"
