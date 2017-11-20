@@ -7,6 +7,7 @@ import (
 	//"flag"
     //"io/ioutil"
     "fmt"
+    "regexp"
 )
 
 type Compress interface {
@@ -18,7 +19,9 @@ type Decompress interface {
 }
 
 type ZipCompress struct {
-    IgnoreFiles            string            // the file to ignore
+    IgnoreFiles            []string            // the file to ignore， use semicoin to sepit multi files
+    IgnoreRegular            string            // it suporrt regular express to ignore file
+    Regular           *regexp.Regexp
 }
 
 type ZipDecompress struct {
@@ -32,7 +35,14 @@ func (this *ZipCompress)Compress(files []*os.File, dst string) error {
     defer func () {
         w.Close()
     	d.Close()
-    }() 
+    }()
+    if this.IgnoreRegular != "" {
+        r, e := regexp.Compile(this.IgnoreRegular)
+        if e != nil {
+            return e
+        }
+        this.Regular = r
+    }
     for _, file := range files {
         err := this.addToZip(file, "", w)
         if err != nil {
@@ -47,13 +57,15 @@ func (this *ZipCompress)addToZip(file *os.File, prefix string, zw *zip.Writer) e
     if err != nil {
         return err
     }
+    defer func(){
+        file.Close()
+    }()
     if info.IsDir() {
         if prefix == "" {
            prefix = info.Name() 
         } else {
             prefix = prefix + "/" + info.Name()
         }
-        fmt.Println(prefix)
         fileInfos, err := file.Readdir(-1)
         if err != nil {
             return err
@@ -69,9 +81,23 @@ func (this *ZipCompress)addToZip(file *os.File, prefix string, zw *zip.Writer) e
             }
         }
     } else {
+        // check ignore file
+        if this.IgnoreFiles != nil && len(this.IgnoreFiles) > 0 {
+            for _,fileName := range this.IgnoreFiles {
+                if fileName == info.Name() {
+                    return nil
+                }
+            }
+        }
+        // regular express
+        if this.Regular != nil {
+            if this.Regular.MatchString(info.Name()) {
+                // skip this file
+                return nil
+            }
+        }
         header, err := zip.FileInfoHeader(info)
         header.Name = prefix + "/" + header.Name
-        fmt.Println(header.Name)
         writer, err := zw.CreateHeader(header)
         if err != nil {
             return err
@@ -80,11 +106,9 @@ func (this *ZipCompress)addToZip(file *os.File, prefix string, zw *zip.Writer) e
         if err != nil {
             return err
         }
-        file.Close()
     }
     return nil
 }
-
 // decompress
 func (this *ZipDecompress) Decompress(zipfile string, dst string) error{
     r, err := zip.OpenReader(zipfile)
@@ -93,7 +117,7 @@ func (this *ZipDecompress) Decompress(zipfile string, dst string) error{
     }
     defer r.Close()
     for _,f := range r.File {
-        fmt.Printf("文件名 %s:\n", f.Name)
+        fmt.Printf("file name %s:\n", f.Name)
         rc, err := f.Open()
         if err != nil {
             return err
@@ -107,6 +131,9 @@ func (this *ZipDecompress) Decompress(zipfile string, dst string) error{
     }
     return nil
 }
+////////////////////////////////////////////////////////////
+// public function
+
 
 func main(){
 	// files := flag.String("files",".","zip files")
@@ -127,6 +154,8 @@ func main(){
     }
     var zippedFiles []*os.File = []*os.File{file}
     compress := &ZipCompress{}
+    compress.IgnoreFiles = []string{"ignore.txt", "text.pg"}
+    compress.IgnoreRegular = `(?i:^hello).*Go`
     e := compress.Compress(zippedFiles, output)
     if e != nil {
         fmt.Println(e)
