@@ -2,20 +2,25 @@ package main
 
 import (
 	"os"
-	"fmt"
 )
 
 /**
 * check if the path exits
-*/
+ */
 func IsExist(path string) bool {
 	_, err := os.Stat(path)
-	fmt.Println(err)
 	return err == nil || os.IsExist(err)
 }
-/**
-*  create file
-*/
-// func Create(dir string, name string) (error){
 
-// }
+/**
+* create file
+ */
+func Create(path string) (string, error) {
+	if IsExist(path) {
+		return path, nil
+	}
+	if err := os.MkdirAll(path, 0777); err != nil {
+		return "", err
+	}
+	return path, nil
+}
