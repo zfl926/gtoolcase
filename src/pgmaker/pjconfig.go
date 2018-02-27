@@ -7,5 +7,5 @@ type ProjectConfig struct {
 }
 
 type PJMaker interface {
-	Create(config *ProjectConfig)
+	Making(config *ProjectConfig)
 }
