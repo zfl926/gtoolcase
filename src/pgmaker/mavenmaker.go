@@ -83,13 +83,18 @@ func (this *MavenConfig) Making() {
 /*******************************************************************
 *   template make
 */
-var rootTemplate string = `
+type RootTmpStrcut struct {
+	GroupName                   string
+	ProjectName                 string
+}
+
+var RootTemplate string = `
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.bl.pathmanager</groupId>
-	<artifactId>pathmanager</artifactId>
+	<groupId>{{.GroupName}}</groupId>
+	<artifactId>{{.ProjectName}}</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
