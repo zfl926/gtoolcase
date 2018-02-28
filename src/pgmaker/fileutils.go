@@ -4,12 +4,17 @@ import (
 	"os"
 )
 
+type CreateFileFunc func(path string, fileName string) (string, error)
+type CreateFoldFunc func(path string) (string, error)
+
 type Repository struct {
 	Name              				string     		 `name`
 	Path              				string     		 `path`
 	RType              				int        		 `1:file 2:folder`
 	ParentReposity                  *Repository      `parent reposity`
-	SubRepositories     			[]*Repository     `sub reposity`
+	SubRepositories     			[]*Repository    `sub reposity`
+	CreateFile                      CreateFileFunc   `create file func`
+	CreateFold                      CreateFoldFunc   `create folder func`                  
 }
 /**
 * create folders
@@ -28,9 +33,9 @@ func (this *Repository) Create() {
 	// 如果上一级目标和当前路径一直，就开始新建文件或则目录
 	if createNow {
 		if this.RType == 2 {
-			CreateFolder(currentPath)
+			this.CreateFold(currentPath)
 		} else {
-			CreateFile(currentPath)
+			this.CreateFile(this.Path, this.Name)
 		}
 	}
 	for _,subRepos := range this.SubRepositories {
