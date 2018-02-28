@@ -35,6 +35,56 @@ func (this *MavenConfig) createRootFile(path string, file string) (string, error
 	return "", nil
 }
 
+func (this *MavenConfig) createWebFile(path string, file string) (string, error){
+	var webData WebTmpStrcut = WebTmpStrcut{
+		ParentTmp  :  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},
+	}
+	tmpl, err:= template.New("Web").Parse(WebTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, webData)
+	if err != nil {
+		return "", err	
+	}
+	return "", nil
+}
+
+func (this *MavenConfig) createServiceFile(path string, file string) (string, error){
+	return "", nil
+}
+
+func (this *MavenConfig) createRelyFile(path string, file string) (string, error){
+	var relyData RelyTmpStrcut = RelyTmpStrcut{
+		ParentTmp  :  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},
+	}
+	tmpl, err:= template.New("Rely").Parse(RelyTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, relyData)
+	if err != nil {
+		return "", err	
+	}
+	return "", nil
+}
+
 func (this *MavenConfig) Making() {
 	projectName   := this.PjConfig.Name
 	//groupName     := this.Group
@@ -71,7 +121,16 @@ func (this *MavenConfig) Making() {
 			CreateFold : CreateFolder,
 		}
 		relyReposity.ParentReposity = rootReposity
+		relyReposity.SubRepositories = make([]*Repository, 2)
 		rootReposity.SubRepositories = append(rootReposity.SubRepositories, relyReposity)
+		var relyPomReposity *Repository = &Repository{
+			Name       : "pom.xml",
+			Path       : pathRoot + GetPathSeparator() + "rely",
+			RType      : 1,
+			CreateFile : this.createRelyFile,
+		}
+		relyPomReposity.ParentReposity = relyReposity
+		relyReposity.SubRepositories = append(relyReposity.SubRepositories, relyPomReposity)
 		///////////////////////////////////////////////////////////////////////////////////////
 		// serivce define begin
 		//
@@ -331,6 +390,60 @@ var ServiceSampleTemplate string = `
 	</parent>
 	<artifactId>{{.ParentTmp.ParentTmp.ProjectName}}.service.sample</artifactId>
 	<packaging>jar</packaging>	
+</project>
+`
+/**
+*  web
+*/
+type WebTmpStrcut struct {
+	ParentTmp                    RootTmpStrcut
+}
+var WebTemplate string = `
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>{{.ParentTmp.GroupName}}</groupId>
+		<artifactId>{{.ParentTmp.ProjectName}}</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>{{.ParentTmp.ProjectName}}.web</artifactId>
+	<packaging>pom</packaging>
+	<modules>
+        <module>web.rest</module>
+  	</modules>
+	<properties>
+		<spring.boot.version>1.5.2.RELEASE</spring.boot.version>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring.boot.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencyManagement>
+		<!-- web project using the spring boot -->
+		<dependencies>
+			<!-- import spring boot basic dependency -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+				<type>pom</type>
+		        <scope>import</scope>
+				<version>${spring.boot.version}</version>
+			</dependency>
+		</dependencies>		
+	</dependencyManagement>
 </project>
 `
 
