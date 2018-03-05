@@ -26,7 +26,7 @@ func main() {
 			fmt.Println("There ware errors reading,exiting program.")
 			return
 		}
-		mavnConfig := CreateWebMavenConfig(projectName, "test", pathName, "pckagename")
+		mavnConfig := CreateWebMavenConfig(projectName, "test", pathName, "test.mvn")
 		mavnConfig.Making()
 	} else {
 		return

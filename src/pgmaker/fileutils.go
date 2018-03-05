@@ -33,9 +33,13 @@ func (this *Repository) Create() {
 	// 如果上一级目标和当前路径一直，就开始新建文件或则目录
 	if createNow {
 		if this.RType == 2 {
-			this.CreateFold(currentPath)
+			if this.CreateFold != nil {
+				this.CreateFold(currentPath)
+			}
 		} else {
-			this.CreateFile(this.Path, this.Name)
+			if  this.CreateFile != nil { 
+				this.CreateFile(this.Path, this.Name)
+			}
 		}
 	}
 	for _,subRepos := range this.SubRepositories {
