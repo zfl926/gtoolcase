@@ -199,6 +199,53 @@ func (this *MavenConfig) createRelySampleFile(path string, file string) (string,
 	return "", nil
 }
 
+func (this *MavenConfig) createWebRestJavaFile(path string, file string) (string, error){
+	var webRestJavaData WebRestJavaStrcut = WebRestJavaStrcut{
+		ParentTmp	:  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},
+		PackageName   : this.PKName,	
+	}
+	tmpl, err := template.New("WebRestJavaFile").Parse(WebRestAppTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, webRestJavaData)
+	if err != nil {
+		return "", err	
+	}
+	return "", nil
+}
+
+func (this *MavenConfig) createControllerSample(path string, file string) (string, error){
+	var webControllerSampleData WebControllerSampleStruct = WebControllerSampleStruct{
+		ParentTmp	:  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},
+		PackageName   : this.PKName,	
+	}
+	tmpl, err := template.New("WebRestControllerSample").Parse(WebControllerSampleTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, webControllerSampleData)
+	if err != nil {
+		return "", err	
+	}
+	return "", nil
+}
 
 func (this *MavenConfig) Making() {
 	projectName   := this.PjConfig.Name
@@ -441,6 +488,79 @@ func (this *MavenConfig) Making() {
 		webReposity.SubRepositories = make([]*Repository, 2)
 		webReposity.SubRepositories = append(webReposity.SubRepositories, webRestReposity)
 		webReposity.SubRepositories = append(webReposity.SubRepositories, webFrontReposity)
+		// web pom
+		var webPomReposity *Repository = &Repository {
+			Name        : "pom.xml",
+			Path        : pathRoot + GetPathSeparator() + "web",
+			RType       : 1,
+			CreateFile  : this.createWebFile,
+		}
+		webPomReposity.ParentReposity = webReposity
+		webReposity.SubRepositories = append(webReposity.SubRepositories, webPomReposity)
+
+		// web.rest.src
+		var webRestSrcReposity *Repository = &Repository {
+			Name       : "src",
+			Path       : webRestReposity.Path + GetPathSeparator() + webRestReposity.Name,
+			RType      : 2,
+			CreateFold : CreateFolder,
+		}
+		webRestSrcReposity.ParentReposity = webRestReposity
+		webRestSrcReposity.SubRepositories = make([]*Repository, 0)
+		webRestReposity.SubRepositories = append(webRestReposity.SubRepositories, webRestSrcReposity)
+		var webRestPKName string = ""
+		if this.PKName != "" {
+			webRestPKName = "main.java."  + this.PKName + ".web.rest"
+		} else {
+			webRestPKName = "main.java.web.rest"
+		}
+		var webParentReposity *Repository = webRestSrcReposity
+		var webRestSrcPath string = webRestSrcReposity.Path + GetPathSeparator() + "src"
+		var webTmpFolder *Repository = nil
+		webFS := strings.SplitN(webRestPKName, ".", -1)
+		for _, f := range webFS {
+			webTmpFolder = &Repository {
+				Name       : f,
+				Path       : webRestSrcPath,
+				RType      : 2,
+				CreateFold : CreateFolder,
+			}
+			webTmpFolder.ParentReposity = webParentReposity
+			webTmpFolder.SubRepositories = make([]*Repository, 1)
+			webParentReposity.SubRepositories = append(webParentReposity.SubRepositories, webTmpFolder)
+			webParentReposity = webTmpFolder
+			webRestSrcPath = webRestSrcPath + GetPathSeparator() + f
+		}		
+		var webRestJavaCode *Repository = &Repository {
+			Name       : "App.java",
+			Path       : webTmpFolder.Path + GetPathSeparator() + webTmpFolder.Name,
+			RType      : 1,
+			CreateFile : this.createWebRestJavaFile,			
+		}
+		webRestJavaCode.ParentReposity = webParentReposity
+		webParentReposity.SubRepositories = append(webParentReposity.SubRepositories, webRestJavaCode)
+		var webController *Repository = &Repository {
+			Name       :  "controller",
+			Path       :  webTmpFolder.Path + GetPathSeparator() + webTmpFolder.Name,
+			RType      :  2,
+			CreateFold :  CreateFolder,
+		}
+		webController.ParentReposity = webParentReposity
+		webController.SubRepositories = make([]*Repository, 0)
+		webParentReposity.SubRepositories = append(webParentReposity.SubRepositories, webController)
+
+		var webControllerSample *Repository = &Repository {
+			Name           : "SampleController.java",
+			Path           : webController.Path + GetPathSeparator() + webController.Name,
+			RType          : 1,
+			CreateFile     : this.createControllerSample,
+		}
+		webControllerSample.ParentReposity = webController
+		webController.SubRepositories = append(webController.SubRepositories, webControllerSample)
+
+		///////////////////////////////////////////////////////////////////////////////////////
+		// web define end
+
 		// create project
 		rootReposity.Create()
 	}
@@ -638,15 +758,14 @@ public class ServiceSampleImpl implements RelySample {
 	}
 }
 `
-
 /**
 *  web
 */
 type WebTmpStrcut struct {
 	ParentTmp                    RootTmpStrcut
 }
-var WebTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var WebTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -693,6 +812,55 @@ var WebTemplate string = `
 	</dependencyManagement>
 </project>
 `
+type WebRestJavaStrcut struct {
+	ParentTmp                    RootTmpStrcut
+	PackageName                  string
+}
+var WebRestAppTemplate string = 
+`package {{.PackageName}}.web.rest;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class App {
+	public static void main(String[] args) {
+		try {
+			SpringApplication.run(App.class, args);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("===============   byebyte ================");
+		}
+	}
+}
+`
+type WebControllerSampleStruct struct {
+	ParentTmp                        RootTmpStrcut
+	PackageName                      string
+}
+
+var WebControllerSampleTemplate string =
+`package {{.PackageName}}.web.rest.controller;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class HelloworldResource {
+//	@Autowired
+//	private AuthenticationManagement authenticationMngt;
+
+	@RequestMapping(value = "helloworld", method = RequestMethod.GET)
+	public String helloworld(){
+//		Optional<User> user = authenticationMngt.login("Joe", "Hello");
+//		if ( user.isPresent() ){
+		return "hello world!";
+	}
+
+}
+`
+
 
 /* create maven web config */
 func CreateWebMavenConfig(artifactId string, groupId string, path string, packageName string)(*MavenConfig){
