@@ -106,6 +106,26 @@ func (this *MavenConfig) createServiceSamplePom(path string, file string) (strin
 }
 
 func (this *MavenConfig) createServiceSampleJava(path string, file string) (string, error){
+	var serviceSampleJavaData ServiceSampleJavaStruct = ServiceSampleJavaStruct{
+		ParentTmp  :  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},
+		PackageName       : this.PKName,
+	}
+	tmpl, err:= template.New("service").Parse(ServiceSampleJavaTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, serviceSampleJavaData)
+	if err != nil {
+		return "", err	
+	}	
 	return "", nil
 }
 
@@ -432,8 +452,8 @@ type RootTmpStrcut struct {
 	GroupName                   string
 	ProjectName                 string
 }
-var RootTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var RootTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -522,8 +542,8 @@ var RootTemplate string = `
 type RelyTmpStrcut struct {
 	ParentTmp                    RootTmpStrcut
 }
-var RelyTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var RelyTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -541,8 +561,8 @@ var RelyTemplate string = `
 type RelySampleStruct struct {
 	ParentTmp                RootTmpStrcut
 }
-var RelySampleTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var RelySampleTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -558,8 +578,8 @@ type RelySampleJavaStruct struct {
 	ParentTmp					RootTmpStrcut
 	PackageName                 string
 }
-var RelySampleJavaTemplate string = `
-package {{.PackageName}}.sample.service;
+var RelySampleJavaTemplate string = 
+`package {{.PackageName}}.sample.service;
 
 public interface RelySample {
 	string sample();
@@ -571,8 +591,8 @@ public interface RelySample {
 type ServiceTmpStrcut struct {
 	ParentTmp                    RootTmpStrcut
 }
-var ServiceTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var ServiceTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -589,9 +609,10 @@ var ServiceTemplate string = `
 `
 type ServiceSampleStrcut struct {
 	ParentTmp                    RootTmpStrcut
+	PackageName                  string
 }
-var ServiceSampleTemplate string = `
-<?xml version="1.0" encoding="UTF-8"?>
+var ServiceSampleTemplate string = 
+`<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -603,9 +624,13 @@ var ServiceSampleTemplate string = `
 	<packaging>jar</packaging>	
 </project>
 `
+type ServiceSampleJavaStruct struct {
+	ParentTmp                    RootTmpStrcut
+	PackageName                  string
+}
 var ServiceSampleJavaTemplate string = 
 `package {{.PackageName}}.sample.service.impl;
-import {{.PackageName}}.sample.serivce;
+import {{.PackageName}}.sample.serivce.impl;
 public class ServiceSampleImpl implements RelySample {
 	@Override
 	public String sample() {
