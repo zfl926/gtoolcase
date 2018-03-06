@@ -247,6 +247,29 @@ func (this *MavenConfig) createControllerSample(path string, file string) (strin
 	return "", nil
 }
 
+func (this *MavenConfig) createWebPomSample(path string, file string) (string, error){
+	var webPomData WebRestPomStrcut = WebRestPomStrcut{
+		ParentTmp	:  RootTmpStrcut{
+			GroupName     : this.Group,
+			ProjectName   : this.PjConfig.Name,
+		},	
+	}
+	tmpl, err := template.New("WebPomSample").Parse(WebRestPomTemplate)
+	if err != nil {
+		return "", err
+	}
+	var filePath string = path + GetPathSeparator() + file
+	f, er := os.Create(filePath)
+	if er != nil {
+		return "", er
+	}
+	err = tmpl.Execute(f, webPomData)
+	if err != nil {
+		return "", err	
+	}
+	return "", nil
+}
+
 func (this *MavenConfig) Making() {
 	projectName   := this.PjConfig.Name
 	//groupName     := this.Group
@@ -497,7 +520,15 @@ func (this *MavenConfig) Making() {
 		}
 		webPomReposity.ParentReposity = webReposity
 		webReposity.SubRepositories = append(webReposity.SubRepositories, webPomReposity)
-
+		// web.rest pom
+		var webRestPomReposity *Repository = &Repository {
+			Name        : "pom.xml",
+			Path        : webRestReposity.Path + GetPathSeparator() + webRestReposity.Name,
+			RType       : 1,
+			CreateFile  : this.createWebPomSample,
+		}
+		webRestPomReposity.ParentReposity = webRestReposity
+		webRestReposity.SubRepositories = append(webRestReposity.SubRepositories, webRestPomReposity)
 		// web.rest.src
 		var webRestSrcReposity *Repository = &Repository {
 			Name       : "src",
@@ -557,6 +588,7 @@ func (this *MavenConfig) Making() {
 		}
 		webControllerSample.ParentReposity = webController
 		webController.SubRepositories = append(webController.SubRepositories, webControllerSample)
+
 
 		///////////////////////////////////////////////////////////////////////////////////////
 		// web define end
@@ -810,6 +842,94 @@ var WebTemplate string =
 			</dependency>
 		</dependencies>		
 	</dependencyManagement>
+</project>
+`
+type WebRestPomStrcut struct {
+	ParentTmp                    RootTmpStrcut
+}
+var WebRestPomTemplate string =
+`<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>{{.ParentTmp.GroupName}}</groupId>
+		<artifactId>{{.ParentTmp.ProjectName}}.web</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	
+	<artifactId>{{.ParentTmp.ProjectName}}.web.rest</artifactId>
+	<packaging>jar</packaging>
+	
+	<dependencies>
+		<!-- import spring boot basic dependency -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- log4j2 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-log4j2</artifactId>
+		</dependency>			
+		<!-- undertow server -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-undertow</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>undertow-websockets-jsr</artifactId>
+					<groupId>io.undertow</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- mybatis spring boot -->
+		<dependency>
+		    <groupId>org.mybatis.spring.boot</groupId>
+		    <artifactId>mybatis-spring-boot-starter</artifactId>
+		</dependency>
+		<!-- druid datasource -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+		    <artifactId>druid</artifactId>		
+		</dependency>		
+		<!-- jdbc -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>tomcat-jdbc</artifactId>
+					<groupId>org.apache.tomcat</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- mysql client -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.lmax</groupId>
+			<artifactId>disruptor</artifactId>
+		</dependency>
+        <!-- reactor java -->
+        <dependency>
+    		<groupId>io.projectreactor</groupId>
+    		<artifactId>reactor-core</artifactId>
+    		<version>3.1.5.RELEASE</version>
+		</dependency>					
+	</dependencies>	
+
 </project>
 `
 type WebRestJavaStrcut struct {
