@@ -15,22 +15,27 @@ type Cmd struct {
 }
 
 func dos2unix(fileName string) int {
-	f, err := os.Open(fileName)
+	rf, err := os.Open(fileName)
     if err != nil {
         return -1
     }
-    defer f.Close()
-    rd := bufio.NewReader(f)
-    wd := bufio.NewWriter(f)
+    wf, err := os.OpenFile(fileName, os.O_WRONLY, 0644)
+    if err != nil {
+    	return -1
+    }
+    defer rf.Close()
+    rd := bufio.NewReader(rf)
+    wd := bufio.NewWriter(wf)
+    var strlines string
     for {
     	line, err := rd.ReadString('\n')
     	if err != nil || io.EOF == err {
             break
         }
-        line = strings.Replace(line, "\n", "\r\n", -1)
-        fmt.Println(line)
-        fmt.Fprintln(wd, line)
+        line = strings.Replace(line, "\r\n", "\n", -1)
+  		strlines = strlines + line
     }
+    wd.WriteString(strlines)
     wd.Flush()
     return 1
 }
@@ -39,14 +44,12 @@ func dos2unix(fileName string) int {
 func cmdController() {
     format := flag.String("format", "dos2unix", "convert format")
     fileNames := flag.String("files", "", "file name to convert")
-    // fmt.Println("%s", *format)
+    flag.Parse()
     if fileNames != nil  && format != nil {
     	strFileName := fmt.Sprintf("%s", *fileNames)
     	strFormat := fmt.Sprintf("%s", *format)
-    	fmt.Println(strFileName)
-    	fileName := fmt.Sprintf(strFileName, " ")
+    	fileName := strings.Split(strFileName, " ")
     	for _, file := range fileName {
-    		fmt.Println(file)
     		if strFormat == "dos2unix" {
     			dos2unix(fmt.Sprintf("%s", file))
     		}
