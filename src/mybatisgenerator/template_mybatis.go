@@ -6,7 +6,7 @@ var MybatisJavaTemplate string =
 package {{.PackageName}}.dao;
 
 {{ range .ImportClasses }}
-	import {{.}}
+	import {{.}};
 {{end}}
 
 
@@ -15,7 +15,7 @@ public interface {{.ClassName}}Dao {
 		{{ range .Annotations }}
 		{{.}}
 		{{end}}
-		{{.ReturnType}} {{.MethodName}} ({{ range .Params }}{{.ParamName}} {{.ParamType}}, {{end}})
+		{{.ReturnType}} {{.MethodName}} ({{ range .Params }}{{.ParamName}} {{.ParamType}}, {{end}});
 	{{end}}
 }
 `
@@ -24,7 +24,20 @@ var MybatisPOJOTemplate string =
 `
 package {{.PackageName}}.entity;
 
-public interface {{.Name}} {
-	{{.PojoProperties}}
+{{ range .ImportClasses }}
+	import {{.}};
+{{end}}
+
+
+public class {{.ClassName}} {
+	{{ range .Field }}
+	private {{.JavaType}} {{.FieldName}}
+	{{end}}
+
+	{{ range .GetSetters }}
+	public {{.MethodReturn}} {{.MethodName}} ({{ range .Params }}{{.ParamName}} {{.ParamType}}, {{end}}){
+		{{.MethodBody}}
+	}
+	{{end}}
 }
 `

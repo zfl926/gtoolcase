@@ -15,7 +15,16 @@ type MyBatisPOJO struct {
 	ClassName          string
 	ImportClasses      []string
 	Field              []JavaClassField
+	GetSetters         []JavaMethod
 }
+
+type JavaMethod struct {
+	MethodName        string
+	MethodReturn      string
+	MethodBody        string
+	params            []JavaParam
+}
+
 
 type JavaParam struct {
 	ParamName         string
@@ -37,13 +46,6 @@ type MyBtisDao  struct {
 }
 
 
-var test_template = 
-`
-{{ range .ImportClasses }}
-	import {{.}}
-{{end}}
-`
-
 func main() {
 	// manager, err := GetDBManager("", "", "", "", 3306)
 	// if err != nil {
@@ -59,8 +61,11 @@ func main() {
 	dao.ImportClasses = make([]string, 0)
 	dao.ImportClasses = append(dao.ImportClasses, "hello111")
 	dao.ImportClasses = append(dao.ImportClasses, "hello222")
+	dao.PackageName = "test"
+	dao.ClassName = "MyTest"
+	
 
-	tmpl, err:= template.New("test").Parse(test_template)
+	tmpl, err:= template.New("MybatisTemplate").Parse(MybatisJavaTemplate)
 	if err == nil {
 		tmpl.Execute(os.Stdout, dao)
 	}
