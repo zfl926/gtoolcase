@@ -48,7 +48,7 @@ func GetDBManager(user string, password string, database string, host string, po
 	if err != nil {
 		return nil, err
 	}
-	err := db.Ping()
+	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}
@@ -63,16 +63,16 @@ func GetDBManager(user string, password string, database string, host string, po
 	return dbManager, nil
 }
 
-func (this *DBManager) Desc(tableName string) []TableDesc, error {
+func (this *DBManager) Desc(tableName string) ([]TableDesc, error) {
 	var desc_myql_sql string = "desc " + tableName
-	rows, err := this.Db.Query(sql)
+	rows, err := this.Db.Query(desc_myql_sql)
 	tableDesc := make([]TableDesc, 0)
 	if err != nil {
 		return tableDesc, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var desc MySqlTableDesc
+		var desc TableDesc
 		err := rows.Scan(&desc.Field, &desc.Type, &desc.Null, &desc.Key, &desc.Default, &desc.Extra)
 		if err != nil {
 			return tableDesc, err
