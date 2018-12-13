@@ -6,7 +6,7 @@ var MybatisJavaTemplate string =
 package {{.PackageName}}.dao;
 
 {{ range .ImportClasses }}
-	import {{.}};
+import {{.}};
 {{end}}
 
 
@@ -23,11 +23,9 @@ public interface {{.ClassName}}Dao {
 var MybatisPOJOTemplate string =
 `
 package {{.PackageName}}.entity;
-
 {{ range .ImportClasses }}
-	import {{.}};
+import {{.}};
 {{end}}
-
 
 public class {{.ClassName}} {
 	{{ range .Field }}

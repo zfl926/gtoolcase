@@ -65,7 +65,7 @@ func main() {
 	dao.ClassName = "MyTest"
 	
 
-	tmpl, err:= template.New("MybatisTemplate").Parse(MybatisJavaTemplate)
+	tmpl, err:= template.New("MybatisTemplate").Parse(MybatisPOJOTemplate)
 	if err == nil {
 		tmpl.Execute(os.Stdout, dao)
 	}
